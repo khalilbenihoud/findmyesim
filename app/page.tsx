@@ -2,33 +2,10 @@
 
 import { useState, useRef, useEffect } from "react";
 import { searchCountries, type Country } from "@/lib/countries";
+import { fetchESIMPlans } from "@/lib/api";
+import { type ESIMPlan } from "@/lib/types";
 import PlanModal from "@/components/PlanModal";
-
-interface ESIMPlan {
-  id: string;
-  provider: string;
-  providerImage: string;
-  data: string;
-  dataType: "4G" | "5G" | "4G/5G";
-  duration: string;
-  price: number;
-  networkRating: number;
-  reviewCount: number;
-  features: string[];
-  partnerOperators: string[];
-  networkPerformance: {
-    speed: string;
-    latency: string;
-    reliability: string;
-  };
-  specifications: {
-    activation: string;
-    hotspot: string;
-    tethering: string;
-    voice: string;
-    sms: string;
-  };
-}
+import ProviderLogo from "@/components/ProviderLogo";
 
 export default function Home() {
   const [country, setCountry] = useState("");
@@ -38,6 +15,7 @@ export default function Home() {
   const [hasSearched, setHasSearched] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [results, setResults] = useState<ESIMPlan[]>([]);
+  const [error, setError] = useState<string | null>(null);
   const [selectedPlan, setSelectedPlan] = useState<ESIMPlan | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -77,148 +55,39 @@ export default function Home() {
     setSelectedCountry(selected);
     setShowSuggestions(false);
     setCountrySuggestions([]);
+    setError(null);
     
     // Automatically trigger search when country is selected
     setIsLoading(true);
     setHasSearched(true);
 
-    // Simulate API call - replace with actual API call later
-    setTimeout(async () => {
-      // Mock data for demonstration
-      const mockResults: ESIMPlan[] = [
-        {
-          id: "1",
-          provider: "Airalo",
-          providerImage: "📱",
-          data: "10 GB",
-          dataType: "4G/5G",
-          duration: "30 days",
-          price: 24.99,
-          networkRating: 4.5,
-          reviewCount: 1250,
-          features: [
-            "Instant activation",
-            "Hotspot included",
-            "No contract",
-            "24/7 support",
-          ],
-          partnerOperators: ["Verizon", "AT&T", "T-Mobile"],
-          networkPerformance: {
-            speed: "Up to 150 Mbps",
-            latency: "< 50ms",
-            reliability: "99.9%",
-          },
-          specifications: {
-            activation: "Instant",
-            hotspot: "Included",
-            tethering: "Yes",
-            voice: "Not included",
-            sms: "Not included",
-          },
-        },
-        {
-          id: "2",
-          provider: "Holafly",
-          providerImage: "🌐",
-          data: "Unlimited",
-          dataType: "4G/5G",
-          duration: "30 days",
-          price: 39.99,
-          networkRating: 4.7,
-          reviewCount: 890,
-          features: [
-            "Unlimited data",
-            "Hotspot included",
-            "No speed limits",
-            "Multi-country",
-          ],
-          partnerOperators: ["Verizon", "AT&T", "T-Mobile", "Sprint"],
-          networkPerformance: {
-            speed: "Up to 200 Mbps",
-            latency: "< 40ms",
-            reliability: "99.8%",
-          },
-          specifications: {
-            activation: "Instant",
-            hotspot: "Included",
-            tethering: "Yes",
-            voice: "Not included",
-            sms: "Not included",
-          },
-        },
-        {
-          id: "3",
-          provider: "Orange",
-          providerImage: "🍊",
-          data: "20 GB",
-          dataType: "5G",
-          duration: "14 days",
-          price: 29.99,
-          networkRating: 4.3,
-          reviewCount: 650,
-          features: [
-            "5G network",
-            "Fast speeds",
-            "EU coverage",
-            "Easy setup",
-          ],
-          partnerOperators: ["Orange", "T-Mobile", "Verizon"],
-          networkPerformance: {
-            speed: "Up to 300 Mbps",
-            latency: "< 30ms",
-            reliability: "99.7%",
-          },
-          specifications: {
-            activation: "Instant",
-            hotspot: "Included",
-            tethering: "Yes",
-            voice: "Not included",
-            sms: "Not included",
-          },
-        },
-        {
-          id: "4",
-          provider: "Nomad",
-          providerImage: "🗺️",
-          data: "15 GB",
-          dataType: "4G/5G",
-          duration: "30 days",
-          price: 27.99,
-          networkRating: 4.4,
-          reviewCount: 420,
-          features: [
-            "Global coverage",
-            "Flexible plans",
-            "No hidden fees",
-            "Easy top-up",
-          ],
-          partnerOperators: ["AT&T", "T-Mobile", "Verizon"],
-          networkPerformance: {
-            speed: "Up to 100 Mbps",
-            latency: "< 60ms",
-            reliability: "99.5%",
-          },
-          specifications: {
-            activation: "Instant",
-            hotspot: "Included",
-            tethering: "Yes",
-            voice: "Not included",
-            sms: "Not included",
-          },
-        },
-      ];
+    try {
+      // Fetch real eSIM data from API
+      const response = await fetchESIMPlans(selected.code, selected.name);
 
-      // Sort by price (cheapest first)
-      const sortedResults = mockResults.sort((a, b) => a.price - b.price);
-      setResults(sortedResults);
+      if (response.success && response.data) {
+        // Sort by price (cheapest first)
+        const sortedResults = response.data.sort((a, b) => a.price - b.price);
+        setResults(sortedResults);
+        setError(null);
+      } else {
+        setError(response.error || "Failed to fetch eSIM plans. Please try again.");
+        setResults([]);
+      }
+    } catch (err) {
+      console.error("Error fetching eSIM plans:", err);
+      setError("An unexpected error occurred. Please try again.");
+      setResults([]);
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   const handleClearInput = () => {
     setCountry("");
     setSelectedCountry(null);
     setResults([]);
+    setError(null);
     setShowSuggestions(false);
     setCountrySuggestions([]);
     setHasSearched(false);
@@ -436,6 +305,34 @@ export default function Home() {
                   </p>
                 </div>
               </div>
+            ) : error ? (
+              <div className="rounded-lg border border-red-200 bg-red-50 p-12 text-center dark:border-red-900 dark:bg-red-900/20">
+                <div className="mb-4 flex justify-center">
+                  <svg
+                    className="h-12 w-12 text-red-500 dark:text-red-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                </div>
+                <p className="mb-2 text-lg font-semibold text-red-800 dark:text-red-300">
+                  Unable to Load Plans
+                </p>
+                <p className="mb-4 text-red-600 dark:text-red-400">{error}</p>
+                <button
+                  onClick={handleClearInput}
+                  className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-600"
+                >
+                  Try Again
+                </button>
+              </div>
             ) : results.length > 0 ? (
               <div className="space-y-4">
                 <div className="mb-6">
@@ -459,9 +356,12 @@ export default function Home() {
                     )}
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
                       {/* Provider Image */}
-                      <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-lg bg-gray-100 text-3xl dark:bg-gray-800">
-                        {plan.providerImage}
-                      </div>
+                      <ProviderLogo
+                        providerName={plan.provider}
+                        logoUrl={plan.providerImage}
+                        size={64}
+                        className="h-16 w-16"
+                      />
                       {/* Plan Details */}
                       <div className="flex-1">
                         <div className="mb-3 flex items-start justify-between">

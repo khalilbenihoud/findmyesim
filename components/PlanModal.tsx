@@ -1,32 +1,8 @@
 "use client";
 
 import { useEffect } from "react";
-
-interface ESIMPlan {
-  id: string;
-  provider: string;
-  providerImage: string;
-  data: string;
-  dataType: "4G" | "5G" | "4G/5G";
-  duration: string;
-  price: number;
-  networkRating: number;
-  reviewCount: number;
-  features: string[];
-  partnerOperators: string[];
-  networkPerformance: {
-    speed: string;
-    latency: string;
-    reliability: string;
-  };
-  specifications: {
-    activation: string;
-    hotspot: string;
-    tethering: string;
-    voice: string;
-    sms: string;
-  };
-}
+import { type ESIMPlan } from "@/lib/types";
+import ProviderLogo from "./ProviderLogo";
 
 interface PlanModalProps {
   plan: ESIMPlan | null;
@@ -97,9 +73,12 @@ export default function PlanModal({ plan, isOpen, onClose }: PlanModalProps) {
         <div className="p-6">
           {/* Provider Info */}
           <div className="mb-6 flex items-start gap-4">
-            <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-gray-100 dark:bg-slate-800">
-              <span className="text-2xl">{plan.providerImage}</span>
-            </div>
+            <ProviderLogo
+              providerName={plan.provider}
+              logoUrl={plan.providerImage}
+              size={64}
+              className="h-16 w-16"
+            />
             <div className="flex-1">
               <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
                 {plan.provider}
