@@ -1,2 +1,3 @@
-# findmyesim
-Compare the best eSIM offers for your destination
+# 🌐 eSIM Comparator
+
+A dynamic web application to **compare international eSIM offers** based on country, price, duration, and data volume.
