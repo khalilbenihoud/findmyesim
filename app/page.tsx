@@ -134,13 +134,11 @@ export default function Home() {
                 <h1 className="mb-4 bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-5xl font-bold tracking-tight text-transparent dark:from-slate-100 dark:via-slate-200 dark:to-slate-300 sm:text-6xl lg:text-7xl">
                   Find the Best eSIM
                   <br />
-                  <span className="text-gray-900 dark:text-slate-100">for Your Journey</span>
+                  <span className="text-gray-900 dark:text-slate-100">for your journey</span>
                 </h1>
                 <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-gray-600 dark:text-slate-300 sm:text-xl">
                   Compare prices, coverage, and features from top providers worldwide. 
-                  <span className="block mt-2 text-base text-gray-500 dark:text-slate-400">
-                    Get instant access to the best deals—no contracts, no hidden fees.
-                  </span>
+
                 </p>
               </div>
 
@@ -343,41 +341,59 @@ export default function Home() {
                     {results.length} plan{results.length !== 1 ? "s" : ""} found
                   </p>
                 </div>
-                {results.map((plan, index) => (
-                  <div
-                    key={plan.id}
-                    className="relative rounded-lg border border-gray-200 bg-white p-6 shadow-sm transition-shadow hover:shadow-md dark:border-slate-800 dark:bg-slate-900/60 dark:backdrop-blur-sm"
-                  >
-                    {/* Best Price Badge */}
-                    {index === 0 && (
-                      <div className="absolute -top-3 left-6 rounded-full bg-green-500 px-3 py-1 text-xs font-semibold text-white">
-                        Best Price
-                      </div>
-                    )}
-                    <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
-                      {/* Provider Image */}
-                      <ProviderLogo
-                        providerName={plan.provider}
-                        logoUrl={plan.providerImage}
-                        size={64}
-                        className="h-16 w-16"
-                      />
-                      {/* Plan Details */}
-                      <div className="flex-1">
-                        <div className="mb-3 flex items-start justify-between">
-                          <div>
-                            <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
-                              {plan.provider}
-                            </h3>
-                            <div className="mt-1 flex items-center gap-2">
-                              <div className="flex text-sm">
-                                {renderStars(plan.networkRating)}
+                {results.map((plan, index) => {
+                  const isBestPrice = index === 0;
+                  return (
+                    <div
+                      key={plan.id}
+                      className={`relative rounded-lg border p-6 shadow-sm transition-all hover:shadow-md ${
+                        isBestPrice
+                          ? "border-green-500 bg-green-50/50 dark:border-green-500 dark:bg-green-950/20"
+                          : "border-gray-200 bg-white dark:border-slate-800 dark:bg-slate-900/60 dark:backdrop-blur-sm"
+                      }`}
+                    >
+                      <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+                        {/* Provider Image */}
+                        <ProviderLogo
+                          providerName={plan.provider}
+                          logoUrl={plan.providerImage}
+                          size={64}
+                          className="h-16 w-16"
+                        />
+                        {/* Plan Details */}
+                        <div className="flex-1">
+                          <div className="mb-3 flex items-start justify-between">
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+                                  {plan.provider}
+                                </h3>
+                                {isBestPrice && (
+                                  <span className="inline-flex items-center gap-1 rounded-full bg-green-500 px-2.5 py-0.5 text-xs font-semibold text-white shadow-sm">
+                                    <svg
+                                      className="h-3 w-3"
+                                      fill="currentColor"
+                                      viewBox="0 0 20 20"
+                                    >
+                                      <path
+                                        fillRule="evenodd"
+                                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                        clipRule="evenodd"
+                                      />
+                                    </svg>
+                                    Best Price
+                                  </span>
+                                )}
                               </div>
-                              <span className="text-sm text-gray-600 dark:text-gray-400">
-                                {plan.networkRating.toFixed(1)} ({plan.reviewCount} reviews)
-                              </span>
+                              <div className="mt-1 flex items-center gap-2">
+                                <div className="flex text-sm">
+                                  {renderStars(plan.networkRating)}
+                                </div>
+                                <span className="text-sm text-gray-600 dark:text-gray-400">
+                                  {plan.networkRating.toFixed(1)} ({plan.reviewCount} reviews)
+                                </span>
+                              </div>
                             </div>
-                          </div>
                           <div className="text-right">
                             <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">
                               ${plan.price}
@@ -422,7 +438,8 @@ export default function Home() {
                       </div>
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <div className="rounded-lg border border-gray-200 bg-white p-12 text-center dark:border-slate-800 dark:bg-slate-900/60 dark:backdrop-blur-sm">
