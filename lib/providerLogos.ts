@@ -24,6 +24,9 @@ export const providerLogos: Record<string, string> = {
   
   // Ubigi - Update with actual logo URL or use local file
   Ubigi: "/images/ubigi-logo.png",
+
+  // Kolet Logo - Update with actual logo URL or use local file
+  Kolet: "/images/kolet-logo.png",
   
   // Default fallback
   default: "/images/default-provider.svg",
