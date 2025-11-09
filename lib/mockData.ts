@@ -103,6 +103,24 @@ export function generateMockESIMData(
       latency: "< 35ms",
       reliability: "99.6%",
     },
+    {
+      name: "Kolet",
+      image: getProviderLogo("Kolet"),
+      emoji: getProviderEmoji("Kolet"),
+      basePriceOffset: 2,
+      rating: 4.5,
+      reviews: 580,
+      features: [
+        "Affordable plans",
+        "Instant activation",
+        "Wide coverage",
+        "Easy management",
+      ],
+      operators: ["Multiple networks"],
+      speed: "Up to 120 Mbps",
+      latency: "< 45ms",
+      reliability: "99.4%",
+    },
   ];
 
   const plans: ESIMPlan[] = providers.map((provider, index) => {

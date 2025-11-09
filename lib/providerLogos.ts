@@ -64,6 +64,7 @@ export function getProviderEmoji(providerName: string): string {
     Nomad: "🗺️",
     Orange: "🍊",
     Ubigi: "🌍",
+    Kolet: "📡",
   };
   
   return emojiMap[providerName] || "📶";

@@ -13,6 +13,7 @@ import { generateMockESIMData } from "@/lib/mockData";
  * - Airalo
  * - Holafly
  * - Nomad
+ * - Kolet
  * - (More can be added)
  * 
  * Note: This is for comparison/display purposes only, not for selling eSIMs.
