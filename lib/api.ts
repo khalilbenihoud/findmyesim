@@ -8,13 +8,22 @@ import { ESIMPlan, APIResponse } from "./types";
  */
 export async function fetchESIMPlans(
   countryCode: string,
-  countryName: string
+  countryName: string,
+  opts?: { minDurationDays?: number; maxPrice?: number }
 ): Promise<APIResponse> {
   try {
     // Call our Next.js API route
-    const response = await fetch(
-      `/api/esim?countryCode=${encodeURIComponent(countryCode)}&countryName=${encodeURIComponent(countryName)}`
-    );
+    const params = new URLSearchParams({
+      countryCode: countryCode,
+      countryName: countryName,
+    });
+    if (opts?.minDurationDays !== undefined) {
+      params.set("minDurationDays", String(opts.minDurationDays));
+    }
+    if (opts?.maxPrice !== undefined) {
+      params.set("maxPrice", String(opts.maxPrice));
+    }
+    const response = await fetch(`/api/esim?${params.toString()}`);
 
     if (!response.ok) {
       throw new Error(`API error: ${response.statusText}`);

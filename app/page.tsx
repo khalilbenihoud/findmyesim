@@ -3,11 +3,13 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { countries, type Country as CountryType } from "@/lib/countries";
 import { searchCountries, type Country } from "@/lib/countries";
 import { fetchESIMPlans } from "@/lib/api";
 import { type ESIMPlan } from "@/lib/types";
 import { FilterOptions, filterPlans, sortPlans } from "@/lib/filters";
-import { calculatePricePerGB, calculateValueScore } from "@/lib/utils";
+import { calculatePricePerGB, calculateValueScore, type FiatCurrency } from "@/lib/utils";
+import { parseNaturalLanguageQuery } from "@/lib/nlpParser";
 import PlanModal from "@/components/PlanModal";
 import ProviderLogo from "@/components/ProviderLogo";
 import AdvancedFilters from "@/components/AdvancedFilters";
@@ -34,9 +36,50 @@ export default function Home() {
   const [comparisonPlans, setComparisonPlans] = useState<ESIMPlan[]>([]);
   const [showComparison, setShowComparison] = useState(false);
   const [priceAlertPlan, setPriceAlertPlan] = useState<ESIMPlan | null>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+
+  // ChatGPT-like input state
+  const [query, setQuery] = useState("");
+  const [parsedQuery, setParsedQuery] = useState<ReturnType<typeof parseNaturalLanguageQuery>>({
+    country: null,
+    days: null,
+    budget: null,
+    currency: "USD",
+  });
+
+  // Parse query in real-time
+  useEffect(() => {
+    if (query.trim()) {
+      const parsed = parseNaturalLanguageQuery(query);
+      setParsedQuery(parsed);
+      // Auto-select country if found
+      if (parsed.country && !selectedCountry) {
+        setSelectedCountry(parsed.country);
+        setCountry(parsed.country.name);
+      }
+    } else {
+      setParsedQuery({
+        country: null,
+        days: null,
+        budget: null,
+        currency: "USD",
+      });
+      setSelectedCountry(null);
+      setCountry("");
+    }
+  }, [query]);
+
+  const submitSmartSearch = () => {
+    if (!parsedQuery.country) return;
+    const params = new URLSearchParams();
+    if (parsedQuery.days) params.set("days", String(parsedQuery.days));
+    if (parsedQuery.budget) params.set("budget", String(parsedQuery.budget));
+    if (parsedQuery.currency) params.set("currency", parsedQuery.currency);
+    const queryString = params.toString();
+    router.push(`/country/${parsedQuery.country.code.toLowerCase()}${queryString ? `?${queryString}` : ""}`);
+  };
 
   // Filter and sort results
   const filteredAndSortedResults = useMemo(() => {
@@ -76,15 +119,12 @@ export default function Home() {
     }
   };
 
-  const handleCountrySelect = async (selected: Country) => {
+  const handleCountrySelect = (selected: Country) => {
     setCountry(selected.name);
     setSelectedCountry(selected);
     setShowSuggestions(false);
     setCountrySuggestions([]);
     setError(null);
-    
-    // Navigate to dedicated country page instead of showing results here
-    router.push(`/country/${selected.code.toLowerCase()}`);
   };
 
   const handleClearInput = () => {
@@ -158,70 +198,81 @@ export default function Home() {
                 </h1>
                 <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-gray-600 dark:text-slate-300 sm:text-xl">
                   Compare prices, coverage, and features from top providers worldwide. 
-
                 </p>
               </div>
 
-              {/* Search Input */}
+              {/* ChatGPT-like Natural Language Input */}
               <div className="w-full">
-                <div className="relative">
-                  <input
-                    ref={inputRef}
-                    type="text"
-                    value={country}
-                    onChange={(e) => handleCountryInputChange(e.target.value)}
-                    onFocus={() => {
-                      if (countrySuggestions.length > 0) {
-                        setShowSuggestions(true);
-                      }
-                    }}
-                    placeholder="Where are you traveling? Type a country..."
-                    className="w-full rounded-xl border-2 border-gray-200 bg-white px-6 py-5 pr-12 text-lg text-gray-900 placeholder-gray-400 shadow-lg transition-all focus:border-gray-400 focus:outline-none focus:ring-4 focus:ring-gray-200 focus:ring-offset-2 dark:border-slate-700 dark:bg-slate-900/80 dark:backdrop-blur-sm dark:text-slate-100 dark:placeholder-slate-400 dark:shadow-slate-900/50 dark:focus:border-slate-600 dark:focus:ring-slate-700"
-                    autoFocus
-                  />
-                  {country && (
+                <div className="rounded-3xl border border-gray-200 bg-white shadow-xl dark:border-slate-700 dark:bg-slate-900">
+                  <div className="p-6">
+                    <textarea
+                      ref={inputRef}
+                      value={query}
+                      onChange={(e) => setQuery(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && !e.shiftKey) {
+                          e.preventDefault();
+                          if (parsedQuery.country) {
+                            submitSmartSearch();
+                          }
+                        }
+                      }}
+                      placeholder="I am looking for an eSIM for Turkey, staying 10 days with a budget of $20..."
+                      className="w-full resize-none border-0 bg-transparent text-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-0 dark:text-gray-100 dark:placeholder-gray-500"
+                      rows={3}
+                    />
+                    
+                    {/* Parsed Information Preview */}
+                    {query.trim() && (
+                      <div className="mt-4 flex flex-wrap items-center gap-3 rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
+                        {parsedQuery.country ? (
+                          <div className="flex items-center gap-2 rounded-full bg-blue-100 px-3 py-1.5 text-sm font-medium text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
+                            <span>{parsedQuery.country.flag}</span>
+                            <span>{parsedQuery.country.name}</span>
+                          </div>
+                        ) : (
+                          <div className="rounded-full bg-gray-200 px-3 py-1.5 text-sm text-gray-500 dark:bg-slate-700 dark:text-gray-400">
+                            Country not detected
+                          </div>
+                        )}
+                        
+                        {parsedQuery.days ? (
+                          <div className="rounded-full bg-green-100 px-3 py-1.5 text-sm font-medium text-green-800 dark:bg-green-900/30 dark:text-green-300">
+                            {parsedQuery.days} days
+                          </div>
+                        ) : (
+                          <div className="rounded-full bg-gray-200 px-3 py-1.5 text-sm text-gray-500 dark:bg-slate-700 dark:text-gray-400">
+                            Duration not specified
+                          </div>
+                        )}
+                        
+                        {parsedQuery.budget ? (
+                          <div className="rounded-full bg-purple-100 px-3 py-1.5 text-sm font-medium text-purple-800 dark:bg-purple-900/30 dark:text-purple-300">
+                            {parsedQuery.currency === "USD" ? "$" : parsedQuery.currency === "EUR" ? "€" : parsedQuery.currency === "GBP" ? "£" : parsedQuery.currency}{parsedQuery.budget}
+                          </div>
+                        ) : (
+                          <div className="rounded-full bg-gray-200 px-3 py-1.5 text-sm text-gray-500 dark:bg-slate-700 dark:text-gray-400">
+                            Budget not specified
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="flex items-center justify-between border-t border-gray-200 px-6 py-4 dark:border-slate-700">
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      {parsedQuery.country
+                        ? "Press Enter or click Find plans to search"
+                        : "Type your travel plans in natural language"}
+                    </p>
                     <button
-                      type="button"
-                      onClick={handleClearInput}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800 dark:hover:text-gray-300"
-                      aria-label="Clear input"
+                      disabled={!parsedQuery.country}
+                      onClick={submitSmartSearch}
+                      className="rounded-full bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white shadow-md transition-all hover:bg-blue-700 hover:shadow-lg disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-500 dark:disabled:bg-slate-700 dark:disabled:text-slate-500"
                     >
-                      <svg
-                        className="h-5 w-5"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M6 18L18 6M6 6l12 12"
-                        />
-                      </svg>
+                      Find plans
                     </button>
-                  )}
-                  {/* Autocomplete Dropdown */}
-                  {showSuggestions && countrySuggestions.length > 0 && (
-                    <div
-                      ref={suggestionsRef}
-                      className="absolute z-20 mt-2 max-h-60 w-full overflow-auto rounded-xl border border-gray-200 bg-white shadow-xl dark:border-slate-700 dark:bg-slate-900/95 dark:backdrop-blur-md"
-                    >
-                      {countrySuggestions.map((suggestion) => (
-                        <button
-                          key={suggestion.code}
-                          type="button"
-                          onClick={() => handleCountrySelect(suggestion)}
-                          className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
-                        >
-                          <span className="text-2xl">{suggestion.flag}</span>
-                          <span className="text-gray-900 dark:text-gray-100">
-                            {suggestion.name}
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-                  )}
+                  </div>
                 </div>
                 
                 {/* Features/Trust Indicators */}

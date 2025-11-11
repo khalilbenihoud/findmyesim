@@ -1,5 +1,44 @@
 import { ESIMPlan } from "./types";
 
+// Basic FX rates vs USD (placeholder; ideally fetched from an API)
+const USD_RATES: Record<string, number> = {
+  USD: 1,
+  EUR: 0.92,
+  GBP: 0.79,
+  CAD: 1.35,
+  AUD: 1.52,
+};
+
+export type FiatCurrency = keyof typeof USD_RATES;
+
+export function convertFromUSD(amountUsd: number, to: FiatCurrency): number {
+  const rate = USD_RATES[to] ?? 1;
+  return amountUsd * rate;
+}
+
+export function currencySymbol(currency: FiatCurrency): string {
+  switch (currency) {
+    case "USD":
+      return "$";
+    case "EUR":
+      return "€";
+    case "GBP":
+      return "£";
+    case "CAD":
+      return "C$";
+    case "AUD":
+      return "A$";
+    default:
+      return "$";
+  }
+}
+
+export function formatCurrency(amount: number, currency: FiatCurrency): string {
+  const symbol = currencySymbol(currency);
+  // Keep lightweight formatting to avoid Intl dependency variance
+  return `${symbol}${amount.toFixed(2)}`;
+}
+
 /**
  * Calculate price per GB for a plan
  */

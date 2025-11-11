@@ -1,12 +1,12 @@
 "use client";
 
 import { useState, useRef, useEffect, useMemo } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { countries, type Country } from "@/lib/countries";
 import { fetchESIMPlans } from "@/lib/api";
 import { type ESIMPlan } from "@/lib/types";
 import { FilterOptions, filterPlans, sortPlans } from "@/lib/filters";
-import { calculatePricePerGB, calculateValueScore } from "@/lib/utils";
+import { calculatePricePerGB, calculateValueScore, convertFromUSD, formatCurrency, type FiatCurrency } from "@/lib/utils";
 import PlanModal from "@/components/PlanModal";
 import ProviderLogo from "@/components/ProviderLogo";
 import AdvancedFilters from "@/components/AdvancedFilters";
@@ -18,6 +18,7 @@ import Link from "next/link";
 export default function CountryPage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const slug = params?.slug as string;
 
   // Find country by code or name
@@ -47,13 +48,24 @@ export default function CountryPage() {
   const [comparisonPlans, setComparisonPlans] = useState<ESIMPlan[]>([]);
   const [showComparison, setShowComparison] = useState(false);
   const [priceAlertPlan, setPriceAlertPlan] = useState<ESIMPlan | null>(null);
+  const [selectedCurrency, setSelectedCurrency] = useState<FiatCurrency>("USD");
 
   // Fetch plans when country is found
   useEffect(() => {
     if (country) {
       setIsLoading(true);
       setError(null);
-      fetchESIMPlans(country.code, country.name)
+      // Read server-side filter hints
+      const daysParam = searchParams?.get("days");
+      const budgetParam = searchParams?.get("budget");
+      const currencyParam = (searchParams?.get("currency") as FiatCurrency) || "USD";
+      setSelectedCurrency(currencyParam);
+      const minDurationDays = daysParam && !Number.isNaN(Number(daysParam)) ? Math.max(1, Number(daysParam)) : undefined;
+      const maxPrice = budgetParam && !Number.isNaN(Number(budgetParam)) ? Math.max(0, Number(budgetParam)) : undefined;
+      fetchESIMPlans(country.code, country.name, {
+        minDurationDays,
+        maxPrice,
+      })
         .then((response) => {
           if (response.success && response.data) {
             const sortedResults = response.data.sort((a, b) => a.price - b.price);
@@ -76,6 +88,27 @@ export default function CountryPage() {
       setIsLoading(false);
     }
   }, [country, slug]);
+
+  // Apply initial filters from query params (days -> minDuration, budget -> maxPrice)
+  useEffect(() => {
+    if (!searchParams) return;
+    const daysParam = searchParams.get("days");
+    const budgetParam = searchParams.get("budget");
+    const nextFilters: FilterOptions = { ...filters };
+    let changed = false;
+    if (daysParam && !Number.isNaN(Number(daysParam))) {
+      nextFilters.minDuration = Math.max(1, Number(daysParam));
+      changed = true;
+    }
+    if (budgetParam && !Number.isNaN(Number(budgetParam))) {
+      nextFilters.maxPrice = Math.max(1, Number(budgetParam));
+      changed = true;
+    }
+    if (changed) {
+      setFilters(nextFilters);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   // Filter and sort results
   const filteredAndSortedResults = useMemo(() => {
@@ -188,19 +221,19 @@ export default function CountryPage() {
             <div>
               <p className="text-xs text-gray-500 dark:text-gray-400">Lowest Price</p>
               <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                ${stats.minPrice.toFixed(2)}
+                {formatCurrency(convertFromUSD(stats.minPrice, selectedCurrency), selectedCurrency)}
               </p>
             </div>
             <div>
               <p className="text-xs text-gray-500 dark:text-gray-400">Average Price</p>
               <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                ${stats.avgPrice.toFixed(2)}
+                {formatCurrency(convertFromUSD(stats.avgPrice, selectedCurrency), selectedCurrency)}
               </p>
             </div>
             <div>
               <p className="text-xs text-gray-500 dark:text-gray-400">Highest Price</p>
               <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                ${stats.maxPrice.toFixed(2)}
+                {formatCurrency(convertFromUSD(stats.maxPrice, selectedCurrency), selectedCurrency)}
               </p>
             </div>
             <div>
@@ -237,6 +270,58 @@ export default function CountryPage() {
             </select>
           </div>
           <div className="flex gap-2">
+            {/* Currency Selector */}
+            <div className="flex items-center gap-2 rounded-md border border-gray-300 bg-white px-3 py-2 text-xs text-gray-700 dark:border-slate-700 dark:bg-slate-800 dark:text-gray-300">
+              <span>Currency</span>
+              <select
+                value={selectedCurrency}
+                onChange={(e) => {
+                  const c = e.target.value as FiatCurrency;
+                  setSelectedCurrency(c);
+                  const sp = new URLSearchParams(searchParams?.toString() || "");
+                  sp.set("currency", c);
+                  router.replace(`?${sp.toString()}`, { scroll: false });
+                }}
+                className="rounded border border-gray-300 bg-white px-2 py-1 text-xs dark:border-slate-600 dark:bg-slate-700"
+              >
+                <option value="USD">USD $</option>
+                <option value="EUR">EUR €</option>
+                <option value="GBP">GBP £</option>
+                <option value="CAD">CAD C$</option>
+                <option value="AUD">AUD A$</option>
+              </select>
+            </div>
+            {/* Active Smart Filters */}
+            {(filters.minDuration || filters.maxPrice) && (
+              <div className="flex items-center gap-2 rounded-md border border-gray-300 bg-white px-3 py-2 text-xs text-gray-700 dark:border-slate-700 dark:bg-slate-800 dark:text-gray-300">
+                {filters.minDuration && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 dark:bg-slate-700">
+                    Days ≥ {filters.minDuration}
+                  </span>
+                )}
+                {filters.maxPrice && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 dark:bg-slate-700">
+                    Budget ≤ ${filters.maxPrice}
+                  </span>
+                )}
+                <button
+                  onClick={() => {
+                    setFilters({
+                      sortBy: filters.sortBy || "price",
+                      sortOrder: filters.sortOrder || "asc",
+                    });
+                    const sp = new URLSearchParams(searchParams?.toString() || "");
+                    sp.delete("days");
+                    sp.delete("budget");
+                    router.replace(`?${sp.toString()}`, { scroll: false });
+                  }}
+                  className="ml-2 rounded border border-gray-300 px-2 py-0.5 text-xs hover:bg-gray-50 dark:border-slate-600 dark:hover:bg-slate-700"
+                  title="Clear smart filters"
+                >
+                  Clear
+                </button>
+              </div>
+            )}
             {comparisonPlans.length > 0 && (
               <button
                 onClick={() => setShowComparison(true)}
@@ -374,7 +459,7 @@ export default function CountryPage() {
                         </div>
                         <div className="text-right">
                           <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-                            ${plan.price}
+                            {formatCurrency(convertFromUSD(plan.price, selectedCurrency), selectedCurrency)}
                           </p>
                         </div>
                       </div>
@@ -386,7 +471,7 @@ export default function CountryPage() {
                           </p>
                           {pricePerGB > 0 && pricePerGB < 999 && (
                             <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-                              ${pricePerGB.toFixed(2)}/GB
+                              {formatCurrency(convertFromUSD(pricePerGB, selectedCurrency), selectedCurrency)}/GB
                             </p>
                           )}
                         </div>

@@ -23,6 +23,10 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const countryCode = searchParams.get("countryCode");
     const countryName = searchParams.get("countryName");
+    const minDurationDaysParam = searchParams.get("minDurationDays");
+    const maxPriceParam = searchParams.get("maxPrice");
+    const minDurationDays = minDurationDaysParam ? Math.max(1, Number(minDurationDaysParam)) : undefined;
+    const maxPrice = maxPriceParam ? Math.max(0, Number(maxPriceParam)) : undefined;
 
     if (!countryCode || !countryName) {
       return NextResponse.json(
@@ -49,6 +53,19 @@ export async function GET(request: NextRequest) {
       console.error("Error scraping providers, using mock data:", error);
       // Fallback to mock data if scraping fails
       plans = generateMockESIMData(countryCode, countryName);
+    }
+
+    // Apply optional server-side filters
+    if (minDurationDays !== undefined || maxPrice !== undefined) {
+      const extractDurationDays = (duration: string) => {
+        const match = duration.match(/(\d+)/);
+        return match ? Number(match[1]) : 0;
+      };
+      plans = plans.filter((p) => {
+        const durationOk = minDurationDays === undefined ? true : extractDurationDays(p.duration) >= minDurationDays;
+        const priceOk = maxPrice === undefined ? true : p.price <= maxPrice;
+        return durationOk && priceOk;
+      });
     }
 
     return NextResponse.json({
