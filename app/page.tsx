@@ -64,38 +64,56 @@ export default function Home() {
   };
 
   return (
-    <main className="min-h-screen bg-white dark:bg-slate-950">
-      <div className="mx-auto max-w-4xl px-4 py-6 sm:py-8 sm:px-6 lg:px-8">
-        <div className="flex min-h-[calc(100vh-4rem)] flex-col items-center justify-center px-2 sm:px-4">
+    <div className="h-full bg-white dark:bg-slate-950 flex items-center justify-center">
+      <div className="mx-auto max-w-4xl w-full px-3 sm:px-4 lg:px-6 py-3 sm:py-4 lg:py-6">
+        <div className="flex flex-col items-center justify-center px-2">
           <div className="w-full max-w-2xl">
             {/* Main Headline */}
-            <div className="mb-8 sm:mb-12 text-center">
-              <h1 className="mb-3 sm:mb-4 bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-3xl font-bold tracking-tight text-transparent dark:from-slate-100 dark:via-slate-200 dark:to-slate-300 sm:text-5xl lg:text-6xl xl:text-7xl">
+            <div className="mb-4 sm:mb-6 lg:mb-8 text-center">
+              <h1 className="mb-2 sm:mb-3 lg:mb-4 bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-2xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold tracking-tight text-transparent dark:from-slate-100 dark:via-slate-200 dark:to-slate-300 leading-tight">
                 Find the Best eSIM
                 <br />
                 <span className="text-gray-900 dark:text-slate-100">for your journey</span>
               </h1>
-              <p className="mx-auto mt-4 sm:mt-6 max-w-2xl text-base leading-relaxed text-gray-600 dark:text-slate-300 sm:text-lg lg:text-xl px-2">
+              <p className="mx-auto mt-2 sm:mt-3 lg:mt-4 max-w-2xl text-sm sm:text-base lg:text-lg leading-relaxed text-gray-600 dark:text-slate-300 px-2">
                 Compare prices, coverage, and features from top providers worldwide.
               </p>
             </div>
 
             {/* Simple Country Search Input */}
             <div className="relative w-full">
-              <input
-                ref={inputRef}
-                type="text"
-                value={country}
-                onChange={(e) => handleCountryInputChange(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && countrySuggestions.length > 0) {
-                    handleCountrySelect(countrySuggestions[0]);
-                  }
-                }}
-                placeholder="Search for a country..."
-                className="w-full rounded-full border border-gray-300 bg-white px-4 py-3.5 text-base shadow-sm transition-all focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-gray-100 dark:placeholder-gray-500 dark:focus:border-blue-400 touch-manipulation sm:px-6 sm:py-4 sm:text-lg"
-                style={{ fontSize: '16px' }}
-              />
+              <div className="relative">
+                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 sm:pl-5 z-10">
+                  <svg
+                    className="h-5 w-5 sm:h-6 sm:w-6 text-gray-400 dark:text-gray-500"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                    />
+                  </svg>
+                </div>
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={country}
+                  onChange={(e) => handleCountryInputChange(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && countrySuggestions.length > 0) {
+                      handleCountrySelect(countrySuggestions[0]);
+                    }
+                  }}
+                  placeholder="Search for a country..."
+                  className="input-glow w-full rounded-full border border-gray-300 bg-white pl-11 sm:pl-14 pr-4 py-3.5 text-base shadow-sm transition-all focus:border-blue-500 focus:outline-none focus:ring-0 dark:border-slate-700 dark:bg-slate-900 dark:text-gray-100 dark:placeholder-gray-500 dark:focus:border-blue-400 touch-manipulation sm:pr-6 sm:py-4 sm:text-lg"
+                  style={{ fontSize: '16px' }}
+                />
+              </div>
               
               {/* Country Suggestions Dropdown */}
               {showSuggestions && countrySuggestions.length > 0 && (
@@ -150,7 +168,7 @@ export default function Home() {
           onClose={() => setPriceAlertPlan(null)}
         />
       )}
-    </main>
+    </div>
   );
 }
 

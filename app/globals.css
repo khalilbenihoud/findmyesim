@@ -55,6 +55,64 @@ body {
   }
 }
 
+/* Glowing input effect */
+@keyframes glow {
+  0%, 100% {
+    box-shadow: 
+      0 0 5px rgba(59, 130, 246, 0.2),
+      0 0 10px rgba(59, 130, 246, 0.15),
+      0 0 15px rgba(59, 130, 246, 0.1);
+  }
+  50% {
+    box-shadow: 
+      0 0 10px rgba(59, 130, 246, 0.4),
+      0 0 20px rgba(59, 130, 246, 0.3),
+      0 0 30px rgba(59, 130, 246, 0.2);
+  }
+}
+
+@keyframes glow-dark {
+  0%, 100% {
+    box-shadow: 
+      0 0 5px rgba(96, 165, 250, 0.3),
+      0 0 10px rgba(96, 165, 250, 0.2),
+      0 0 15px rgba(96, 165, 250, 0.15);
+  }
+  50% {
+    box-shadow: 
+      0 0 10px rgba(96, 165, 250, 0.5),
+      0 0 20px rgba(96, 165, 250, 0.4),
+      0 0 30px rgba(96, 165, 250, 0.3);
+  }
+}
+
+.input-glow {
+  animation: glow 3s ease-in-out infinite;
+}
+
+@media (prefers-color-scheme: dark) {
+  .input-glow {
+    animation: glow-dark 3s ease-in-out infinite;
+  }
+}
+
+.input-glow:focus {
+  animation: none;
+  box-shadow: 
+    0 0 15px rgba(59, 130, 246, 0.5),
+    0 0 30px rgba(59, 130, 246, 0.3),
+    0 0 45px rgba(59, 130, 246, 0.2) !important;
+}
+
+@media (prefers-color-scheme: dark) {
+  .input-glow:focus {
+    box-shadow: 
+      0 0 15px rgba(96, 165, 250, 0.6),
+      0 0 30px rgba(96, 165, 250, 0.4),
+      0 0 45px rgba(96, 165, 250, 0.3) !important;
+  }
+}
+
 /* Mobile-first optimizations */
 @layer base {
   /* Improve touch targets */

@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Epilogue } from "next/font/google";
 import "./globals.css";
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
 
 const epilogue = Epilogue({
   subsets: ["latin"],
@@ -29,7 +31,11 @@ export default function RootLayout({
   return (
     <html lang="en" className={epilogue.variable}>
       <body className={`${epilogue.className} antialiased`}>
-        {children}
+        <div className="flex h-screen flex-col overflow-hidden">
+          <Header />
+          <main className="flex-1 overflow-y-auto">{children}</main>
+          <Footer />
+        </div>
       </body>
     </html>
   );
