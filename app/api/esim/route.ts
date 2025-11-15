@@ -18,6 +18,10 @@ import { generateMockESIMData } from "@/lib/mockData";
  * 
  * Note: This is for comparison/display purposes only, not for selling eSIMs.
  */
+
+// Force dynamic rendering for this API route
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
